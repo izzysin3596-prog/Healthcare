@@ -1,11 +1,12 @@
 import streamlit as st
-import base64
+# import base64
 import google.generativeai as genai
+from PIL import Image
 
 st.title("당뇨 케어 푸드 스캐너")
 
 GOOGLE_API_KEY = "AIzaSyCVdVzlrPJiK0koRJiTBgXryCJW37dZTmE"
-genai.configure(api_key-GOOGLE_API_KEY)
+genai.configure(api_key=GOOGLE_API_KEY)
 img_file = st.camera_input("음식을 촬영해주세요")
 
 if img_file is not None:
