@@ -5,7 +5,7 @@ from PIL import Image # Genai
 
 st.title("당뇨 케어 푸드 스캐너")
 
-GOOGLE_API_KEY = "AIzaSyCVdVzlrPJiK0koRJiTBgXryCJW37dZTmE"
+GOOGLE_API_KEY = "AIzaSyB3_RBHjgsXBzTfxCFaBGcrFSwwxObeJ4U"
 genai.configure(api_key=GOOGLE_API_KEY)
 
 tab1, tab2 = st.tabs(["카메라로 촬영", "갤러리에서 업로드"])
