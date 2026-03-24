@@ -8,6 +8,19 @@ st.title("당뇨 케어 푸드 스캐너")
 GOOGLE_API_KEY = "AIzaSyB3_RBHjgsXBzTfxCFaBGcrFSwwxObeJ4U"
 genai.configure(api_key=GOOGLE_API_KEY)
 
+# 사이드 바 : 사용자 프로필 작성
+with st.sidebar:
+    st.header("사용자 프로필")
+    st.write("개인 정보를 입력하면 맞춤형 분석을 제공합니다.")
+
+#정보 입력
+    user_name = st.text_input("이름")
+    user_age = st.number_input("나이")
+    user_gender = st.selectbox("성별",["남성","여성"])
+
+    st.header("목표 설정")
+    daily_goal = st.text_input("하루 목표 당 섭취량(g)", value=25)
+
 tab1, tab2 = st.tabs(["카메라로 촬영", "갤러리에서 업로드"])
 
 # 사진 찍기
