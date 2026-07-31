@@ -8,7 +8,7 @@ notion = Client(auth = "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")
 
 st.title("당뇨 케어 푸드 스캐너")
 
-GOOGLE_API_KEY = "AIzaSyB3_RBHjgsXBzTfxCFaBGcrFSwwxObeJ4U"
+GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
 genai.configure(api_key=GOOGLE_API_KEY)
 
 # 사이드 바 : 사용자 프로필 작성
