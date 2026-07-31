@@ -116,7 +116,7 @@ if img_file is not None:
             data = json.loads(st.session_state.ai_result)
     
             notion.pages.create(
-                parent={"database_id","3abab25d770d80a4a5cdfa055327d5a3"}
+                parent={"database_id": "3abab25d770d80a4a5cdfa055327d5a3"}
                 properties={
                     "Name": {"title": [{"text": {"content": data["식단명"]}}]},
                     "영양정보": {"rich_text": [{"text": {"content": data["영양정보"]}}]},
