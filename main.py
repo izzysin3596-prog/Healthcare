@@ -120,7 +120,7 @@ if img_file is not None:
                 properties={
                     "Name": {"title": [{"text": {"content": data["식단명"]}}]},
                     "영양정보": {"rich_text": [{"text": {"content": data["영양정보"]}}]},
-                    "칼로리": {"number": int(data["칼로리"]}}
+                    "칼로리": {"number": int(data["칼로리"])}
                 }
             )
             st.success("노션 저장 완료")
