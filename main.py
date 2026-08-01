@@ -124,7 +124,7 @@ if img_file is not None:
                 notion.pages.create(
                     parent={"database_id": "3abab25d770d80a4a5cdfa055327d5a3"},
                     properties={
-                        "Name": {"title": [{"text": {"content": data["식단명"]}}]},
+                        "식단명": {"title": [{"text": {"content": data["식단명"]}}]},
                         "영양정보": {"rich_text": [{"text": {"content": data["영양정보"]}}]},
                         "칼로리": {"number": int(data["칼로리"])},
                         "분석 내용": {"rich_text": [{"text": {"content": data["분석 내용"]}}]},
