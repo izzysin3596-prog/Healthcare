@@ -104,23 +104,30 @@ if img_file is not None:
                 response = model.generate_content([prompt, image])
 
                 # 결과 출력
-                st.success("분석 완료!")
                 st. session_state.ai_result = response.text
-                st.write(response.text)
+                st.success("분석 완료!")
             except Exception as e:
                 st.error(f"오류가 발생했습니다.: {e}")
 
-    if st.button("노션에 저장"):
-        if 'ai_result' in st.session_state:
-    
-            data = json.loads(st.session_state.ai_result)
-    
-            notion.pages.create(
-                parent={"database_id": "3abab25d770d80a4a5cdfa055327d5a3"},
-                properties={
-                    "Name": {"title": [{"text": {"content": data["식단명"]}}]},
-                    "영양정보": {"rich_text": [{"text": {"content": data["영양정보"]}}]},
-                    "칼로리": {"number": int(data["칼로리"])}
-                }
-            )
-            st.success("노션 저장 완료")
+    if 'ai_result' in st.session_state:
+        result_text - st.session_state.ai_result
+        json_str = result_text[result_text.find("{"}:result_text.rfind("}"}=1]
+        data = json.loads(json_str)
+        st.write("### AI 분석 결과")
+        st.write(data)
+
+        if st.button("노션에 저장"):
+            try:
+                notion.pages.create(
+                    parent={"database_id": "3abab25d770d80a4a5cdfa055327d5a3"},
+                    properties={
+                        "Name": {"title": [{"text": {"content": data["식단명"]}}]},
+                        "영양정보": {"rich_text": [{"text": {"content": data["영양정보"]}}]},
+                        "칼로리": {"number": int(data["칼로리"])}
+                        "분석 내용": {"rich_text": [{"text": {"content": data["분석 내용"]}}]},
+                        "기록날짜": {"date": {"start": datetime.now().strftime("%Y-%m-%d")}}
+                    }
+                )
+                st.success("노션 저장 완료")
+            except Exeption as e:
+                st.error(f"데이터 형식이 올바르지 않아 저장할 수 없습니다: {e}")
