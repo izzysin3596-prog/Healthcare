@@ -113,7 +113,7 @@ if img_file is not None:
 
     if 'ai_result' in st.session_state:
         result_text - st.session_state.ai_result
-        json_str = result_text[result_text.find("{"):result_text.rfind("}")=1]
+        json_str = result_text[result_text.find("{"):result_text.rfind("}")+1]
         data = json.loads(json_str)
         st.write("### AI 분석 결과")
         st.write(data)
