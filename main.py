@@ -113,14 +113,15 @@ if img_file is not None:
 
     if 'ai_result' in st.session_state:
         result_text = st.session_state.ai_result
-        json_str = result_text[result_text.find("{"):result_text.rfind("}")+1]
-        data = json.loads(json_str)
         
         st.write("### AI 분석 결과")
         st.write(result_text)
 
         if st.button("노션에 저장"):
             try:
+                json_str = result_text[result_text.find("{"):result_text.rfind("}")+1]
+                data = json.loads(json_str)
+                
                 notion.pages.create(
                     parent={"database_id": "3abab25d770d80a4a5cdfa055327d5a3"},
                     properties={
