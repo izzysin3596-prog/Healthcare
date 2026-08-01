@@ -121,6 +121,8 @@ if img_file is not None:
             try:
                 json_str = result_text[result_text.find("{"):result_text.rfind("}")+1]
                 data = json.loads(json_str)
+
+                st.code(result_text)
                 
                 notion.pages.create(
                     parent={"database_id": "3abab25d770d80a4a5cdfa055327d5a3"},
