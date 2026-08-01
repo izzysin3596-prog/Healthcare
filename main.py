@@ -133,5 +133,5 @@ if img_file is not None:
                     }
                 )
                 st.success("노션 저장 완료")
-            except Exeption as e:
+            except Exception as e:
                 st.error(f"데이터 형식이 올바르지 않아 저장할 수 없습니다: {e}")
