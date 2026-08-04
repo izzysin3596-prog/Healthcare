@@ -2,3 +2,4 @@ streamlit
 google-generativeai
 pillow
 notion-client
+streamlit_calendar
