@@ -5,7 +5,7 @@ import json
 from PIL import Image # Genai
 from notion_client import Client
 from datetime import datetime
-import stramlit_calendar import calendar
+import streamlit_calendar import calendar
 
 
 # 노션 설정
