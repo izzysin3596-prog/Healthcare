@@ -5,6 +5,7 @@ import json
 from PIL import Image # Genai
 from notion_client import Client
 from datetime import datetime
+import stramlit_calendar import calendar
 
 
 # 노션 설정
@@ -49,8 +50,17 @@ with tab2:
 
 with tab3:
     "노션 데이터 불러오기" 
-    results = notion.databases.query(database_id= "3abab25d770d80a4a5cdfa055327d5a3")
-    st.write(results)
+    calendar_options = {
+        "editable": False,
+        "selectable":True,
+        "initalview": "dayGridMonth"
+    }
+    state = calendar{event,options=calendar_options}
+    
+    results = notion.databases.query(
+        **{"database_id"= "3abab25d770d80a4a5cdfa055327d5a3"}
+    )
+    st.json(results)
 
 if img_file is not None:
     
