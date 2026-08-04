@@ -48,8 +48,9 @@ with tab2:
         img_file = upload_img
 
 with tab3:
-    "노션 데이터 불러오기"  
-    
+    "노션 데이터 불러오기" 
+    results = notion.databases.query(database_id= "3abab25d770d80a4a5cdfa055327d5a3")
+        st.write(results)
 
 if img_file is not None:
     
