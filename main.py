@@ -38,29 +38,21 @@ img_file = None
 
 # [탭 1] 카메라 기능
 with tab1:
-    camera_img = st.camera_input("음식을 촬영해주세요")
-    if camera_img:
-        img_file = camera_img
-
-# [탭 2] 파일 업로드 기능
-with tab2:
-    upload_img = st.file_uploader("이미지 파일을 업로드 하세요.", type=['png','jpg','jpge'])
-    if upload_img:
-        img_file = upload_img
-
-with tab3:
-    "노션 데이터 불러오기" 
     calendar_options = {
         "editable": False,
         "selectable":True,
         "initalview": "dayGridMonth"
     }
     state = calendar{events==[],options=calendar_options}
-    
-    results = notion.databases.query(
-        **{"database_id"= "3abab25d770d80a4a5cdfa055327d5a3"}
-    )
-    st.json(results)
+
+# [탭 2] 파일 업로드 기능
+with tab2:
+    upload_img = st.file_uploader("이미지 파일을 업로드 하세요.", type=['png','jpg','jpge'])
+    if upload_img:
+        img_file = upload_img
+         camera_img = st.camera_input("음식을 촬영해주세요")
+    if camera_img:
+        img_file = camera_img
 
 if img_file is not None:
     
