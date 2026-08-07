@@ -46,7 +46,7 @@ with tab1:
         },
         "initialView": "dayGridMonth",
     }
-    state = calendar{events=[],options=calendar_options}
+    state = calendar(events=[], options=calendar_options) 
 
 # [탭 2] 카메라 촬영 기능
 with tab2:
