@@ -31,28 +31,31 @@ with st.sidebar:
     daily_goal = st.text_input("하루 목표 당 섭취량(g)", value=25)
     
 # 탭 메뉴 만들기
-tab1, tab2, tab3 = st.tabs(["카메라로 촬영","갤러리에서 업로드","혈당 관리"])
+tab1, tab2, tab3 = st.tabs(["혈당 관리","카메라로 촬영","갤러리에서 업로드"])
 
 # 사진 찍기
 img_file = None
 
-# [탭 1] 카메라 기능
+# [탭 1] 혈당관리 기능
 with tab1:
     calendar_options = {
         "editable": False,
         "selectable":True,
         "initalview": "dayGridMonth"
     }
-    state = calendar{events==[],options=calendar_options}
+    state = calendar{events=[],options=calendar_options}
 
-# [탭 2] 파일 업로드 기능
+# [탭 2] 카메라 촬영 기능
 with tab2:
+    camera_img = st.camera_input("음식을 촬영해주세요")
+    if camera_img:
+        img_file = camera_img
+
+with tab3:
     upload_img = st.file_uploader("이미지 파일을 업로드 하세요.", type=['png','jpg','jpge'])
     if upload_img:
         img_file = upload_img
-         camera_img = st.camera_input("음식을 촬영해주세요")
-    if camera_img:
-        img_file = camera_img
+    
 
 if img_file is not None:
     
