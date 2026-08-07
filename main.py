@@ -39,9 +39,12 @@ img_file = None
 # [탭 1] 혈당관리 기능
 with tab1:
     calendar_options = {
-        "editable": False,
-        "selectable":True,
-        "initalview": "dayGridMonth"
+        "headerToolbar": {
+            "left": "today prev,next",
+            "center": "title",
+            "right": "dayGridMonth,dayGridWeek",
+        },
+        "initialView": "dayGridMonth",
     }
     state = calendar{events=[],options=calendar_options}
 
