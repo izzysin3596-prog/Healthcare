@@ -38,6 +38,29 @@ img_file = None
 
 # [탭 1] 혈당관리 기능
 with tab1:
+    db_id = "3abab25d770d80a4a5cdfa055327d5a3"
+    token = "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"
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28"
+    }    
+
+    try:
+        url = f"https://apl.notion.com/v1/databases/{db_id}/query"
+        response = requests.post(url, headers=headers)
+
+        if response.status_code == 200:
+            results = response.json()
+            st.write(results)
+
+        else:
+            st.error(f"API 호출 실패: {respnse.status_code} - {response.text}")
+
+    except Exception as e:
+        st.error(f"에러 발생: {e}")
+        
     calendar_options = {
         "headerToolbar": {
             "left": "today prev,next",
