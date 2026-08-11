@@ -54,7 +54,7 @@ with tab1:
         
         if response.status_code == 200:
             results = response.json()
-            st.write(results)
+            #st.write(results)
             # 여기서 데이터를 달력용 리스트로 변환하면 됩니다.
         else:
             st.error(f"API 호출 실패: {response.status_code} - {response.text}")
@@ -70,6 +70,26 @@ with tab1:
         },
         "initialView": "dayGridMonth",
     }
+    
+    events=[]
+    raw_data = result.get('result',[])
+
+    for item in raw_data:
+        props = item.get('properties',{})
+
+        try:
+            title = props.get('__',{}).get('title',[{}])[___].get('plain_text','')
+            start_date = props.get('___',{}).get('___',{}).get('start','')
+
+            if _____:
+                event.____({
+                    "title":title,
+                    "start":start_date,
+                    "end":start_date
+                    ))
+        except Exception as e:
+            continue
+    
     state = calendar(events=[], options=calendar_options) 
 
 # [탭 2] 카메라 촬영 기능
