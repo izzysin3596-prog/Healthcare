@@ -48,15 +48,15 @@ with tab1:
     }    
 
     try:
-        url = f"https://apl.notion.com/v1/databases/{db_id}/query"
+        url = f"https://api.notion.com/v1/databases/{db_id}/query"
         response = requests.post(url, headers=headers)
-
+        
         if response.status_code == 200:
             results = response.json()
             st.write(results)
-
+            # 여기서 데이터를 달력용 리스트로 변환하면 됩니다.
         else:
-            st.error(f"API 호출 실패: {respnse.status_code} - {response.text}")
+            st.error(f"API 호출 실패: {response.status_code} - {response.text}")
 
     except Exception as e:
         st.error(f"에러 발생: {e}")
