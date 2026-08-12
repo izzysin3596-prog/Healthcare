@@ -78,11 +78,11 @@ with tab1:
         props = item.get('properties',{})
 
         try:
-            title = props.get('__',{}).get('title',[{}])[___].get('plain_text','')
-            start_date = props.get('___',{}).get('___',{}).get('start','')
+            title = props.get('식단명',{}).get('title',[{}])[0].get('plain_text','')
+            start_date = props.get('기록날짜',{}).get('date',{}).get('start','')
 
-            if _____:
-                event.____({
+            if start date:
+                event.append({
                     "title":title,
                     "start":start_date,
                     "end":start_date
