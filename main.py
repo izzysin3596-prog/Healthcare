@@ -87,7 +87,7 @@ with tab1:
                     "title":title,
                     "start":start_date,
                     "end":start_date
-                    "rich_text": {"content": analysis_content} 
+                    "extendedProps": {"content": analysis_content} 
                 })
         except Exception as e:
             continue
