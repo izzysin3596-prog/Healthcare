@@ -79,7 +79,7 @@ with tab1:
 
         try:
             title = props.get('식단명',{}).get('title',[{}])[0].get('plain_text','')
-            start_date = props.get('기록날짜',{}).get('date',{}).get('start','')
+            start_date = props.get('기록날짜',{}).get('date',{})
 
             if start_date:
                 event.append({
