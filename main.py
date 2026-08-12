@@ -86,7 +86,7 @@ with tab1:
                 events.append({
                     "title":title,
                     "start":start_date,
-                    "end":start_date
+                    "end":start_date,
                     "extendedProps": {"content": analysis_content} 
                 })
         except Exception as e:
