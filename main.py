@@ -72,7 +72,7 @@ with tab1:
     }
     
     events=[]
-    raw_data = results.get('result',[])
+    raw_data = results.get('results',[])
 
     for item in raw_data:
         props = item.get('properties',{})
@@ -82,7 +82,7 @@ with tab1:
             start_date = props.get('기록날짜',{}).get('date',{}).get('start', '')
 
             if start_date:
-                event.append({
+                events.append({
                     "title":title,
                     "start":start_date,
                     "end":start_date
