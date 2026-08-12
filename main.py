@@ -86,7 +86,7 @@ with tab1:
                     "title":title,
                     "start":start_date,
                     "end":start_date
-                    ))
+                })
         except Exception as e:
             continue
     
