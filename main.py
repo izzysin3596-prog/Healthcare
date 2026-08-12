@@ -80,17 +80,28 @@ with tab1:
         try:
             title = props.get('식단명',{}).get('title',[{}])[0].get('plain_text','')
             start_date = props.get('기록날짜',{}).get('date',{}).get('start', '')
+            analysis_content = props.get('분석내용', {}).get(get'rich_text', {})[0].get'plain_text','')
 
             if start_date:
                 events.append({
                     "title":title,
                     "start":start_date,
                     "end":start_date
+                    "rich_text": {"content": analysis_content} 
                 })
         except Exception as e:
             continue
     
     state = calendar(events=events, options=calendar_options) 
+
+    def show_analysis(content):
+        st.write(content)
+
+    if state.get("eventClick"):
+        event_info = state["eventClick"]
+        analysis_text = event_info["event"]["rich_text"]["content"]
+        show_analysis(analysis_text)
+        
 
 # [탭 2] 카메라 촬영 기능
 with tab2:
