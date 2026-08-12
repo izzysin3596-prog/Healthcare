@@ -79,7 +79,7 @@ with tab1:
 
         try:
             title = props.get('식단명',{}).get('title',[{}])[0].get('plain_text','')
-            start_date = props.get('기록날짜',{}).get('date',{})
+            start_date = props.get('기록날짜',{}).get('date',{}).get('start', '')
 
             if start_date:
                 event.append({
@@ -90,7 +90,7 @@ with tab1:
         except Exception as e:
             continue
     
-    state = calendar(events=[], options=calendar_options) 
+    state = calendar(events=events, options=calendar_options) 
 
 # [탭 2] 카메라 촬영 기능
 with tab2:
