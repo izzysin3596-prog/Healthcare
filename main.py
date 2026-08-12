@@ -72,7 +72,7 @@ with tab1:
     }
     
     events=[]
-    raw_data = result.get('result',[])
+    raw_data = results.get('result',[])
 
     for item in raw_data:
         props = item.get('properties',{})
