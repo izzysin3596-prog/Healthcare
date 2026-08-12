@@ -99,7 +99,7 @@ with tab1:
 
     if state.get("eventClick"):
         event_info = state["eventClick"]
-        analysis_text = event_info["event"]["rich_text"]["content"]
+        analysis_text = event_info["event"]["extendedProps"]["content"]
         show_analysis(analysis_text)
         
 
