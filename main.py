@@ -91,14 +91,17 @@ with tab1:
                 })
         except Exception as e:
             continue
-    
-    state = calendar(events=events, options=calendar_options) 
 
     def show_analysis(content):
         st.write(content)
+    
+    state = calendar(events=events, options=calendar_options) 
+
+    if 'show_detail' not in st.session_state:
+        st.session_state.show_detail = False
 
     if state.get("eventClick"):
-        event_info = state["eventClick"]
+        clicked_title = state["eventClick"]["event]["title]
         analysis_text = event_info["event"]["extendedProps"]["content"]
         show_analysis(analysis_text)
         
