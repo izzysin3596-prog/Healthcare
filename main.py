@@ -102,8 +102,15 @@ with tab1:
 
     if state.get("eventClick"):
         clicked_title = state["eventClick"]["event]["title]
-        analysis_text = event_info["event"]["extendedProps"]["content"]
-        show_analysis(analysis_text)
+        st.session_state.show_detail = not st.session_stat.show_detail
+        analysis_text = state["eventClick"]["event"]["extendedProps"]["content"]
+        st.session_stat.current_analysis = analysis_text
+    
+    if st.session_state.show_detail:
+        st.divider()
+        st.write("### 상세 분석 리포트")
+        st.write(st.session_state.current_analysis)
+        #show_analysis(analysis_text)
         
 
 # [탭 2] 카메라 촬영 기능
