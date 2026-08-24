@@ -64,11 +64,14 @@ with tab1:
         
     calendar_options = {
         "headerToolbar": {
-            "left": "today prev,next",
+            "left": "prev,next",
             "center": "title",
-            "right": "dayGridMonth,dayGridWeek",
+            "right": "",
         },
         "initialView": "dayGridMonth",
+        "aspecRation":0.0,
+        "height":"auto",
+        "dayMaxEvents":True,
     }
     
     events=[]
