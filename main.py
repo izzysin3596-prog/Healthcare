@@ -104,7 +104,7 @@ with tab1:
         clicked_title = state["eventClick"]["event"]["title"]
         st.session_state.show_detail = not st.session_state.show_detail
         analysis_text = state["eventClick"]["event"]["extendedProps"]["content"]
-        st.session_stat.current_analysis = analysis_text
+        st.session_state.current_analysis = analysis_text
     
     if st.session_state.show_detail:
         st.divider()
