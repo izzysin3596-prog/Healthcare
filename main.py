@@ -101,7 +101,7 @@ with tab1:
         st.session_state.show_detail = False
 
     if state.get("eventClick"):
-        clicked_title = state["eventClick"]["event]["title]
+        clicked_title = state["eventClick"]["event"]["title"]
         st.session_state.show_detail = not st.session_stat.show_detail
         analysis_text = state["eventClick"]["event"]["extendedProps"]["content"]
         st.session_stat.current_analysis = analysis_text
