@@ -2,7 +2,7 @@ import streamlit as st # 스트림릿 라이브러리 추가
 # import base64 # 이미지를 텍스트로 변환 openia = GPT
 import google.generativeai as genai
 import requests
-import json
+import json, re
 from PIL import Image # Genai
 from notion_client import Client
 from datetime import datetime
@@ -32,13 +32,39 @@ with st.sidebar:
     daily_goal = st.text_input("하루 목표 당 섭취량(g)", value=25)
     
 # 탭 메뉴 만들기
-tab1, tab2, tab3 = st.tabs(["혈당 관리","카메라로 촬영","갤러리에서 업로드"])
+tab1, tab2, tab3, tab4 = st.tabs(["대시보드","혈당 관리","카메라로 촬영","갤러리에서 업로드"])
 
 # 사진 찍기
 img_file = None
 
-# [탭 1] 혈당관리 기능
 with tab1:
+    st.subheader("오늘의 건강 리포트")
+    def extract_sugar(text):
+        match = re.search(r'당류\s*(\d+)g', text)
+        return int(mathc.group(1)) if mathc else 0
+
+    try:
+        result_text = st.session_state.ai_result
+        start = resul_text.find("(")
+        end = result_text.rfind("}") + 1
+        data = json.loads(result_text[start:end])
+
+        col1, col2 = st.columns(2)
+        col1.metric("오늘의 칼로리", f"data['칼로리']jkcal")
+        col2.metric("당류 함량", data['영양정보'].네ㅣㅑㅅ(',')[0])
+
+        sugar_val = extract_sugar(data['영양정보'])
+        goal = int(daily_goal)
+        ratio = sugar_val / goal
+
+        st.write("### 혈당 스파이크 위험도")
+        st.progress(min(ratio,1.0))
+
+except Exception as e:
+    st.warning("분석 데이터를 불러오는 중 오류가 발생했습니다.")
+
+# [탭 1] 혈당관리 기능
+with tab2:
     db_id = "3abab25d770d80a4a5cdfa055327d5a3"
     token = "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"
 
@@ -117,12 +143,12 @@ with tab1:
         
 
 # [탭 2] 카메라 촬영 기능
-with tab2:
+with tab3:
     camera_img = st.camera_input("음식을 촬영해주세요")
     if camera_img:
         img_file = camera_img
 
-with tab3:
+with tab4:
     upload_img = st.file_uploader("이미지 파일을 업로드 하세요.", type=['png','jpg','jpge'])
     if upload_img:
         img_file = upload_img
