@@ -34,8 +34,28 @@ with st.sidebar:
 # 탭 메뉴 만들기
 tab1, tab2, tab3, tab4 = st.tabs(["대시보드","혈당 관리","카메라로 촬영","갤러리에서 업로드"])
 
-db_id = "3abab25d770d80a4a5cdfa055327d5a3"
-token = "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"
+
+def fetch_notion_data():
+    db_id = "3abab25d770d80a4a5cdfa055327d5a3"
+    token = "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"
+    
+    headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Notion-Version": "2022-06-28"
+    }    
+    
+    try:
+        response = requests.post(url, headers=headers)
+            
+        if response.status_code == 200:
+            results = response.json().get('results',[])
+            return results
+        else:
+            st.error(f"API 호출 실패: {response.status_code} - {response.text}")
+    
+    except Exception as e:
+        st.error(f"에러 발생: {e}")
 
 # 사진 찍기
 img_file = None
@@ -43,11 +63,10 @@ img_file = None
 url = f"https://api.notion.com/v1/databases/{db_id}/query"
 
 with tab1:
-    st.subheader("오늘의 건강 리포트")
+    st.subheader("나의 건강 리포트")
 
     try:
-        results = notion.request(path-url,method-"POST")
-        items = result.get('results',[])
+        items = fetch_notion_data()
 
         if items:
             st.write(f"총 {len(items)}개의 식단 기록이 있습니다.")
@@ -61,25 +80,6 @@ with tab1:
 
 # [탭 1] 혈당관리 기능
 with tab2:
-
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "Notion-Version": "2022-06-28"
-    }    
-
-    try:
-        response = requests.post(url, headers=headers)
-        
-        if response.status_code == 200:
-            results = response.json()
-            #st.write(results)
-            # 여기서 데이터를 달력용 리스트로 변환하면 됩니다.
-        else:
-            st.error(f"API 호출 실패: {response.status_code} - {response.text}")
-
-    except Exception as e:
-        st.error(f"에러 발생: {e}")
         
     calendar_options = {
         "headerToolbar": {
@@ -94,7 +94,7 @@ with tab2:
     }
     
     events=[]
-    raw_data = results.get('results',[])
+    raw_data = fetch_notion_data()
 
     for item in raw_data:
         props = item.get('properties',{})
