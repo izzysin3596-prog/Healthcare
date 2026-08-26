@@ -34,6 +34,9 @@ with st.sidebar:
 # 탭 메뉴 만들기
 tab1, tab2, tab3, tab4 = st.tabs(["대시보드","혈당 관리","카메라로 촬영","갤러리에서 업로드"])
 
+db_id = "3abab25d770d80a4a5cdfa055327d5a3"
+token = "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"
+
 # 사진 찍기
 img_file = None
 
@@ -58,8 +61,6 @@ with tab1:
 
 # [탭 1] 혈당관리 기능
 with tab2:
-    db_id = "3abab25d770d80a4a5cdfa055327d5a3"
-    token = "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"
 
     headers = {
         "Authorization": f"Bearer {token}",
