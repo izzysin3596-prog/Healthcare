@@ -60,8 +60,8 @@ with tab1:
         st.write("### 혈당 스파이크 위험도")
         st.progress(min(ratio,1.0))
 
-except Exception as e:
-    st.warning("분석 데이터를 불러오는 중 오류가 발생했습니다.")
+    except Exception as e:
+        st.warning("분석 데이터를 불러오는 중 오류가 발생했습니다.")
 
 # [탭 1] 혈당관리 기능
 with tab2:
