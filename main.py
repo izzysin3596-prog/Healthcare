@@ -37,32 +37,24 @@ tab1, tab2, tab3, tab4 = st.tabs(["대시보드","혈당 관리","카메라로 �
 # 사진 찍기
 img_file = None
 
+url = f"https://api.notion.com/v1/databases/{db_id}/query"
+
 with tab1:
     st.subheader("오늘의 건강 리포트")
-    def extract_sugar(text):
-        match = re.search(r'당류\s*(\d+)g', text)
-        return int(mathc.group(1)) if mathc else 0
 
     try:
-        result_text = st.session_state.ai_result
-        start = resul_text.find("(")
-        end = result_text.rfind("}") + 1
-        data = json.loads(result_text[start:end])
-        st.write(data)
+        results = notion.request(path-url,method-"POST")
+        items = result.get('results',[])
 
-        col1, col2 = st.columns(2)
-        col1.metric("오늘의 칼로리", f"data['칼로리']jkcal")
-        col2.metric("당류 함량", data['영양정보'].네ㅣㅑㅅ(',')[0])
+        if items:
+            st.write(f"총 {len(items)}개의 식단 기록이 있습니다.")
 
-        sugar_val = extract_sugar(data['영양정보'])
-        goal = int(daily_goal)
-        ratio = sugar_val / goal
-
-        st.write("### 혈당 스파이크 위험도")
-        st.progress(min(ratio,1.0))
-
+            total_cal = sum(item['properties']['칼로리']['number'] for item in items if item['properties']['칼로리']['number'])
+            st.metric("누적 칼로리", f"{total_cal} kcal")
+        else:
+            st.info("아직 기록된 식단이 없어요. 식단 기록을 시작해보세요.")
     except Exception as e:
-        st.warning("분석 데이터를 불러오는 중 오류가 발생했습니다.")
+        st.error("데이터를 불러오지 못했습니다.")
 
 # [탭 1] 혈당관리 기능
 with tab2:
@@ -76,7 +68,6 @@ with tab2:
     }    
 
     try:
-        url = f"https://api.notion.com/v1/databases/{db_id}/query"
         response = requests.post(url, headers=headers)
         
         if response.status_code == 200:
