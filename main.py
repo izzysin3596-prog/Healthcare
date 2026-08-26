@@ -48,6 +48,7 @@ with tab1:
         start = resul_text.find("(")
         end = result_text.rfind("}") + 1
         data = json.loads(result_text[start:end])
+        st.write(data)
 
         col1, col2 = st.columns(2)
         col1.metric("오늘의 칼로리", f"data['칼로리']jkcal")
