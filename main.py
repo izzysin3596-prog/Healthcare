@@ -76,7 +76,7 @@ with tab1:
                 date_str = item['properties']['기록날짜']['date']['start']
                 record_date = datetime.strptime(date_str,"%Y-%m-%d")
 
-                if record_date >+ week_ago:
+                if record_date >= week_ago:
                     weekly_data.append(item['properties'])
             
             st.write(f"총 {len(weekly_data)}개의 식단 기록이 있습니다.")
