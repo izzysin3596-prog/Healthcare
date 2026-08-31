@@ -69,12 +69,12 @@ with tab1:
 
         if items:
             today = datetime.now()
-            weak_ago = today - timedelta(days-7)
+            weak_ago = today - timedelta(days=7)
 
             weekly_data = []
             for item in items:
                 date_str = item['properties']['기록날짜']['date']['start']
-                record_date = datetime.strptime(date_str,"%y %m %d")
+                record_date = datetime.strptime(date_str,"%Y-%m-%d")
 
                 if record_date >+ week_ago:
                     weekly_data.append(item['properties'])
