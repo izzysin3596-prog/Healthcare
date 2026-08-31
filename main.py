@@ -81,7 +81,7 @@ with tab1:
             
             st.write(f"총 {len(weekly_data)}개의 식단 기록이 있습니다.")
 
-            weekly_cal = sum(item['properties']['칼로리']['number'] for item in items if item['properties']['칼로리']['number'])
+            weekly_cal = sum(item['칼로리']['number'] for item in weekly_data if item['칼로리']['number'])
 
             st.bar_chart({item['식단명']['title'][0]['plain text']: item['칼로리']['number'] for item in weekly_data})
             
