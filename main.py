@@ -83,7 +83,7 @@ with tab1:
 
             weekly_cal = sum(item['properties']['칼로리']['number'] for item in items if item['properties']['칼로리']['number'])
 
-            st.bar_chart((item['식단명']['title'][0]['plain text']: item['칼로리']['number'] for item in weekly_data])
+            st.bar_chart({item['식단명']['title'][0]['plain text']: item['칼로리']['number'] for item in weekly_data})
             
             st.metric("누적 칼로리", f"{weekly_cal} kcal")
         else:
