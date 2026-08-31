@@ -79,7 +79,7 @@ with tab1:
                 if record_date >+ week_ago:
                     weekly_data.append(item['properties'])
             
-            st.write(f"총 {len(weekly data)}개의 식단 기록이 있습니다.")
+            st.write(f"총 {len(weekly_data)}개의 식단 기록이 있습니다.")
 
             weekly_cal = sum(item['properties']['칼로리']['number'] for item in items if item['properties']['칼로리']['number'])
 
