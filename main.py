@@ -38,6 +38,7 @@ tab1, tab2, tab3, tab4 = st.tabs(["대시보드","혈당 관리","카메라로 �
 def fetch_notion_data():
     db_id = "3abab25d770d80a4a5cdfa055327d5a3"
     token = "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"
+    url = f"https://api.notion.com/v1/databases/{db_id}/query"
     
     headers = {
             "Authorization": f"Bearer {token}",
@@ -59,8 +60,6 @@ def fetch_notion_data():
 
 # 사진 찍기
 img_file = None
-
-url = f"https://api.notion.com/v1/databases/{db_id}/query"
 
 with tab1:
     st.subheader("나의 건강 리포트")
