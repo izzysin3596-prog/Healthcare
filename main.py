@@ -68,7 +68,7 @@ with tab1:
         items = fetch_notion_data()
 
         if items:
-            today - datetime.now()
+            today = datetime.now()
             weak_ago = today - timedelta(days-7)
 
             weekly_data = []
