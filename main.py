@@ -69,7 +69,7 @@ with tab1:
 
         if items:
             today = datetime.now()
-            weak_ago = today - timedelta(days=7)
+            week_ago = today - timedelta(days=7)
 
             weekly_data = []
             for item in items:
