@@ -5,7 +5,7 @@ import requests, pandas
 import json, re
 from PIL import Image # Genai
 from notion_client import Client
-from datetime import datetime
+from datetime import datetime, timedelta
 from streamlit_calendar import calendar
 
 
