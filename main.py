@@ -1,7 +1,7 @@
 import streamlit as st # 스트림릿 라이브러리 추가
 # import base64 # 이미지를 텍스트로 변환 openia = GPT
 import google.generativeai as genai
-import requests, as pd
+import requests, pandas as pd
 import json, re
 from PIL import Image # Genai
 from notion_client import Client
