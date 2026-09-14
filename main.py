@@ -1,7 +1,7 @@
 import streamlit as st # 스트림릿 라이브러리 추가
 # import base64 # 이미지를 텍스트로 변환 openia = GPT
 import google.generativeai as genai
-import requests, pandas
+import requests, as pd
 import json, re
 from PIL import Image # Genai
 from notion_client import Client
@@ -73,19 +73,29 @@ with tab1:
 
             weekly_data = []
             for item in items:
-                date_str = item['properties']['기록날짜']['date']['start']
+                props = item['properties']
+                date_str = props['기록날짜']['date']['start']
                 record_date = datetime.strptime(date_str,"%Y-%m-%d")
 
                 if record_date >= week_ago:
-                    weekly_data.append(item['properties'])
+                    weekly_data.append({
+                        "식단명": props['식단명']['title'][0]['plain_text'],
+                        "칼로리": props['칼로리']['number'] if props['칼로리']['number'] else 0
+                    })
             
             st.write(f"총 {len(weekly_data)}개의 식단 기록이 있습니다.")
 
-            weekly_cal = sum(item['칼로리']['number'] for item in weekly_data if item['칼로리']['number'])
+            if weekly_data:
+                df = pd.DataFrame(weekly_data)
 
-            st.bar_chart({item['식단명']['title'][0]['plain_text']: item['칼로리']['number'] for item in weekly_data})
-            
-            st.metric("누적 칼로리", f"{weekly_cal} kcal")
+                st.bar_chart(df.set_index("식단명"), horizontal=True)
+
+                weekly_cal = df["칼로리"].sum()
+                
+                st.metric("누적 칼로리", f"{weekly_cal} kcal")
+            else:
+                st.info("최근 7일간 기록된 식단이 없습니다.")
+        
         else:
             st.info("아직 기록된 식단이 없어요. 식단 기록을 시작해보세요.")
     except Exception as e:
