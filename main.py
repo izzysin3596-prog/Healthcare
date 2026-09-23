@@ -111,7 +111,7 @@ with tab2:
             "right": "",
         },
         "initialView": "dayGridMonth",
-        "aspecRation":0.0,
+        "aspectRation":0.0,
         "height":"auto",
         "dayMaxEvents":True,
     }
