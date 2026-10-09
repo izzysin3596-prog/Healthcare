@@ -14,13 +14,41 @@ st.set_page_config(page_title="혈당 가이드", page_icon="🩺", layout="wide
 # Supabase 클라이언트 초기화 (@st.cache_resource)
 @st.cache_resource
 def init_supabase() -> Client:
-    try:
-        supabase_url = st.secrets["supabase"]["SUPABASE_URL"]
-        supabase_key = st.secrets["supabase"]["SUPABASE_PUBLISHABLE_KEY"]
-        return create_client(supabase_url, supabase_key)
-    except KeyError as e:
-        st.error(f"Supabase 설정 누락: .streamlit/secrets.toml 파일의 [supabase] 섹션을 확인해주세요. ({e})")
+    # secrets 내 [supabase] 섹션 또는 루트 키에서 대소문자 무관하게 탐색
+    supabase_sec = st.secrets.get("supabase", {})
+    if not isinstance(supabase_sec, dict):
+        supabase_sec = {}
+
+    url = (
+        supabase_sec.get("SUPABASE_URL")
+        or supabase_sec.get("supabase_url")
+        or supabase_sec.get("url")
+        or st.secrets.get("SUPABASE_URL")
+        or st.secrets.get("supabase_url")
+    )
+
+    key = (
+        supabase_sec.get("SUPABASE_PUBLISHABLE_KEY")
+        or supabase_sec.get("supabase_publishable_key")
+        or supabase_sec.get("publishable_key")
+        or supabase_sec.get("key")
+        or st.secrets.get("SUPABASE_PUBLISHABLE_KEY")
+        or st.secrets.get("supabase_publishable_key")
+    )
+
+    if not url or not key:
+        st.error(
+            "⚠️ Supabase 설정 누락: `.streamlit/secrets.toml` (로컬) 또는 Streamlit Cloud의 **App Settings ➔ Secrets**에 아래 설정을 추가해주세요:\n\n"
+            "```toml\n"
+            "[supabase]\n"
+            'SUPABASE_URL = "https://lyqyarhbedcnouxdqchp.supabase.co"\n'
+            'SUPABASE_PUBLISHABLE_KEY = "sb_publishable_VvBiEXvDvL4RxWFggsFN-g_EH7FiKL_"\n'
+            "```"
+        )
         st.stop()
+
+    try:
+        return create_client(url, key)
     except Exception as e:
         st.error(f"Supabase 클라이언트 초기화 실패: {e}")
         st.stop()
@@ -49,8 +77,9 @@ def fetch_diet_records():
         return []
 
 # Google Gemini API 설정
-if "GOOGLE_API_KEY" in st.secrets and st.secrets["GOOGLE_API_KEY"]:
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+google_api_key = st.secrets.get("GOOGLE_API_KEY") or st.secrets.get("google_api_key")
+if google_api_key:
+    genai.configure(api_key=google_api_key)
 
 st.title("🩺 혈당 가이드")
 st.markdown("음식 사진을 찍거나 올려주세요. AI가 영양소를 분석해드립니다.")
