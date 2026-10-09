@@ -1,195 +1,275 @@
-import streamlit as st # 스트림릿 라이브러리 추가
-# import base64 # 이미지를 텍스트로 변환 openia = GPT
+import streamlit as st
 import google.generativeai as genai
-import requests, pandas as pd
-import json, re
-from PIL import Image # Genai
-from notion_client import Client
+import pandas as pd
+import json
+import re
+from PIL import Image
 from datetime import datetime, timedelta
 from streamlit_calendar import calendar
+from supabase import create_client, Client
 
+# Streamlit 페이지 기본 설정
+st.set_page_config(page_title="혈당 가이드", page_icon="🩺", layout="wide")
 
-# 노션 설정
-notion = Client(auth="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")
+# Supabase 클라이언트 초기화 (@st.cache_resource)
+@st.cache_resource
+def init_supabase() -> Client:
+    try:
+        supabase_url = st.secrets["supabase"]["SUPABASE_URL"]
+        supabase_key = st.secrets["supabase"]["SUPABASE_PUBLISHABLE_KEY"]
+        return create_client(supabase_url, supabase_key)
+    except KeyError as e:
+        st.error(f"Supabase 설정 누락: .streamlit/secrets.toml 파일의 [supabase] 섹션을 확인해주세요. ({e})")
+        st.stop()
+    except Exception as e:
+        st.error(f"Supabase 클라이언트 초기화 실패: {e}")
+        st.stop()
 
-st.title("혈당 가이드")
-st.markdown("음식사진을 찍거나 올려주세요. AI가 영양소를 분석해드립니다.")
+supabase = init_supabase()
 
-GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
-genai.configure(api_key=GOOGLE_API_KEY)
+# Supabase 데이터베이스 연동 함수
+def save_diet_record(meal_name: str, calories: float, carbs: float, sugar: float, ai_feedback: str):
+    """Supabase diet_records 테이블에 식단 기록을 저장합니다."""
+    data = {
+        "meal_name": meal_name,
+        "calories": calories,
+        "carbs": carbs,
+        "sugar": sugar,
+        "ai_feedback": ai_feedback
+    }
+    return supabase.table("diet_records").insert(data).execute()
+
+def fetch_diet_records():
+    """Supabase diet_records 테이블에서 데이터를 created_at 기준 내림차순으로 조회합니다."""
+    try:
+        response = supabase.table("diet_records").select("*").order("created_at", desc=True).execute()
+        return response.data or []
+    except Exception as e:
+        st.error(f"식단 기록 조회 실패: {e}")
+        return []
+
+# Google Gemini API 설정
+if "GOOGLE_API_KEY" in st.secrets and st.secrets["GOOGLE_API_KEY"]:
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+
+st.title("🩺 혈당 가이드")
+st.markdown("음식 사진을 찍거나 올려주세요. AI가 영양소를 분석해드립니다.")
 
 # 사이드 바 : 사용자 프로필 작성
 with st.sidebar:
     st.header("사용자 프로필")
     st.write("개인 정보를 입력하면 맞춤형 분석을 제공합니다.")
 
-    # 정보입력
-    user_name = st.text_input("이름")
-    user_age = st.number_input("나이", value=20)
-    user_gender = st.selectbox("성별",["남성","여성"])
+    # 정보 입력
+    user_name = st.text_input("이름", value="홍길동")
+    user_age = st.number_input("나이", min_value=1, max_value=120, value=20)
+    user_gender = st.selectbox("성별", ["남성", "여성"])
 
     st.header("목표 설정")
-    daily_goal = st.text_input("하루 목표 당 섭취량(g)", value=25)
-    
+    daily_goal = st.number_input("하루 목표 당 섭취량(g)", min_value=0, value=25)
+
 # 탭 메뉴 만들기
-tab1, tab2, tab3, tab4 = st.tabs(["대시보드","혈당 관리","카메라로 촬영","갤러리에서 업로드"])
+tab1, tab2, tab3, tab4 = st.tabs(["대시보드", "혈당 관리", "카메라로 촬영", "갤러리에서 업로드"])
 
-
-def fetch_notion_data():
-    db_id = "3abab25d770d80a4a5cdfa055327d5a3"
-    token = "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"
-    url = f"https://api.notion.com/v1/databases/{db_id}/query"
-    
-    headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-            "Notion-Version": "2022-06-28"
-    }    
-    
-    try:
-        response = requests.post(url, headers=headers)
-            
-        if response.status_code == 200:
-            results = response.json().get('results',[])
-            return results
-        else:
-            st.error(f"API 호출 실패: {response.status_code} - {response.text}")
-    
-    except Exception as e:
-        st.error(f"에러 발생: {e}")
-
-# 사진 찍기
-img_file = None
-
+# [탭 1] 대시보드 (나의 건강 리포트)
 with tab1:
-    st.subheader("나의 건강 리포트")
+    st.subheader("📊 나의 주간 건강 리포트")
 
     try:
-        items = fetch_notion_data()
+        records = fetch_diet_records()
 
-        if items:
+        if records:
             today = datetime.now()
             week_ago = today - timedelta(days=7)
 
             weekly_data = []
-            for item in items:
-                props = item['properties']
-                date_str = props['기록날짜']['date']['start']
-                record_date = datetime.strptime(date_str,"%Y-%m-%d")
+            for item in records:
+                created_at_raw = item.get("created_at")
+                if created_at_raw:
+                    try:
+                        record_dt = pd.to_datetime(created_at_raw).to_pydatetime()
+                        if record_dt.tzinfo is not None:
+                            record_dt = record_dt.replace(tzinfo=None)
+                    except Exception:
+                        record_dt = today
+                else:
+                    record_dt = today
 
-                if record_date >= week_ago:
+                if record_dt >= week_ago:
                     weekly_data.append({
-                        "식단명": props['식단명']['title'][0]['plain_text'],
-                        "칼로리": props['칼로리']['number'] if props['칼로리']['number'] else 0
+                        "식단명": item.get("meal_name", "미상"),
+                        "칼로리(kcal)": float(item.get("calories") or 0),
+                        "탄수화물(g)": float(item.get("carbs") or 0),
+                        "당류(g)": float(item.get("sugar") or 0),
+                        "기록일시": record_dt.strftime("%Y-%m-%d %H:%M")
                     })
-            
-            st.write(f"총 {len(weekly_data)}개의 식단 기록이 있습니다.")
 
             if weekly_data:
                 df = pd.DataFrame(weekly_data)
+                st.write(f"최근 7일간 총 **{len(weekly_data)}개**의 식단 기록이 있습니다.")
 
-                st.bar_chart(df.set_index("식단명"), horizontal=True)
+                # 통계 지표 카드
+                col1, col2, col3 = st.columns(3)
+                total_cal = df["칼로리(kcal)"].sum()
+                total_carbs = df["탄수화물(g)"].sum()
+                total_sugar = df["당류(g)"].sum()
 
-                weekly_cal = df["칼로리"].sum()
-                
-                st.metric("누적 칼로리", f"{weekly_cal} kcal")
+                col1.metric("누적 칼로리", f"{total_cal:,.1f} kcal")
+                col2.metric("누적 탄수화물", f"{total_carbs:,.1f} g")
+                col3.metric("누적 당류", f"{total_sugar:,.1f} g", delta=f"목표 대비 {total_sugar - float(daily_goal):+.1f}g" if daily_goal else None)
+
+                st.markdown("---")
+                st.write("#### 🥗 식단별 칼로리 현황")
+                st.bar_chart(df.set_index("식단명")["칼로리(kcal)"], horizontal=True)
+
+                st.write("#### 📈 식단별 탄수화물 & 당류 섭취 현황")
+                st.bar_chart(df.set_index("식단명")[["탄수화물(g)", "당류(g)"]])
+
+                with st.expander("최근 7일 상세 기록 목록 보기"):
+                    st.dataframe(df, use_container_width=True)
             else:
                 st.info("최근 7일간 기록된 식단이 없습니다.")
-        
+                if records:
+                    with st.expander("전체 식단 기록 보기"):
+                        all_df = pd.DataFrame([{
+                            "식단명": r.get("meal_name", "미상"),
+                            "칼로리(kcal)": float(r.get("calories") or 0),
+                            "탄수화물(g)": float(r.get("carbs") or 0),
+                            "당류(g)": float(r.get("sugar") or 0),
+                            "기록일시": str(r.get("created_at", ""))[:19]
+                        } for r in records])
+                        st.dataframe(all_df, use_container_width=True)
         else:
             st.info("아직 기록된 식단이 없어요. 식단 기록을 시작해보세요.")
     except Exception as e:
-        st.error(f"데이터를 불러오지 못했습니다.:{e}")
+        st.error(f"데이터를 불러오지 못했습니다: {e}")
 
-# [탭 1] 혈당관리 기능
+# [탭 2] 혈당 관리 (캘린더 뷰)
 with tab2:
-        
+    st.subheader("📅 식단 및 혈당 관리 캘린더")
+
     calendar_options = {
         "headerToolbar": {
-            "left": "prev,next",
+            "left": "prev,next today",
             "center": "title",
-            "right": "",
+            "right": "dayGridMonth,timeGridWeek",
         },
         "initialView": "dayGridMonth",
-        "aspectRation":0.0,
-        "height":"auto",
-        "dayMaxEvents":True,
+        "aspectRatio": 1.5,
+        "height": "auto",
+        "dayMaxEvents": True,
     }
-    
-    events=[]
-    raw_data = fetch_notion_data()
+
+    events = []
+    raw_data = fetch_diet_records()
 
     for item in raw_data:
-        props = item.get('properties',{})
-
         try:
-            title = props.get('식단명',{}).get('title',[{}])[0].get('plain_text','')
-            start_date = props.get('기록날짜',{}).get('date',{}).get('start', '')
-            analysis_content = props.get('분석내용', {}).get('rich_text', {})[0].get('plain_text','')
+            meal_name = item.get("meal_name", "식단")
+            cal = item.get("calories", 0)
+            carbs = item.get("carbs", 0)
+            sugar = item.get("sugar", 0)
+            analysis_content = item.get("ai_feedback", "")
+            start_date_raw = item.get("created_at")
 
-            if start_date:
+            if start_date_raw:
+                start_date = str(start_date_raw)[:10]
                 events.append({
-                    "title":title,
-                    "start":start_date,
-                    "end":start_date,
-                    "extendedProps": {"content": analysis_content} 
+                    "title": f"{meal_name} ({cal}kcal)",
+                    "start": start_date,
+                    "end": start_date,
+                    "extendedProps": {
+                        "meal_name": meal_name,
+                        "calories": cal,
+                        "carbs": carbs,
+                        "sugar": sugar,
+                        "content": analysis_content
+                    }
                 })
-        except Exception as e:
+        except Exception:
             continue
 
-    def show_analysis(content):
-        st.write(content)
-    
-    state = calendar(events=events, options=calendar_options) 
+    state = calendar(events=events, options=calendar_options)
 
     if 'show_detail' not in st.session_state:
         st.session_state.show_detail = False
 
     if state.get("eventClick"):
-        clicked_title = state["eventClick"]["event"]["title"]
-        st.session_state.show_detail = not st.session_state.show_detail
-        analysis_text = state["eventClick"]["event"]["extendedProps"]["content"]
-        st.session_state.current_analysis = analysis_text
-    
-    if st.session_state.show_detail:
-        st.divider()
-        st.write("### 상세 분석 리포트")
-        st.write(st.session_state.current_analysis)
-        #show_analysis(analysis_text)
-        
+        clicked_event = state["eventClick"]["event"]
+        st.session_state.show_detail = True
+        st.session_state.current_event = clicked_event.get("extendedProps", {})
+        st.session_state.current_title = clicked_event.get("title", "")
 
-# [탭 2] 카메라 촬영 기능
+    if st.session_state.show_detail and "current_event" in st.session_state:
+        current = st.session_state.current_event
+        st.divider()
+        st.write(f"### 📋 상세 분석 리포트: {current.get('meal_name', st.session_state.get('current_title', ''))}")
+
+        m1, m2, m3 = st.columns(3)
+        m1.metric("칼로리", f"{current.get('calories', 0)} kcal")
+        m2.metric("탄수화물", f"{current.get('carbs', 0)} g")
+        m3.metric("당류", f"{current.get('sugar', 0)} g")
+
+        st.markdown("#### 🤖 AI 맞춤 조언")
+        st.info(current.get("content", "분석 내용이 없습니다."))
+
+# [탭 3] 카메라 촬영 기능 & [탭 4] 갤러리 업로드 기능
+img_file = None
+
 with tab3:
     camera_img = st.camera_input("음식을 촬영해주세요")
     if camera_img:
         img_file = camera_img
 
 with tab4:
-    upload_img = st.file_uploader("이미지 파일을 업로드 하세요.", type=['png','jpg','jpge'])
+    upload_img = st.file_uploader("이미지 파일을 업로드 하세요.", type=['png', 'jpg', 'jpeg'])
     if upload_img:
         img_file = upload_img
-    
 
+def extract_and_parse_json(text: str) -> dict:
+    """정규식을 활용하여 AI 응답에서 JSON 데이터를 안전하게 추출 및 파싱합니다."""
+    # 1. ```json ... ``` 마크다운 블록 추출 시도
+    code_block = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    if code_block:
+        json_str = code_block.group(1)
+    else:
+        # 2. 첫 번째 '{'부터 마지막 '}'까지 추출 시도
+        bracket_match = re.search(r"(\{.*\})", text, re.DOTALL)
+        if bracket_match:
+            json_str = bracket_match.group(1)
+        else:
+            raise ValueError("응답에서 JSON 데이터 블록을 찾을 수 없습니다.")
+
+    parsed = json.loads(json_str)
+
+    # 필드명 및 자료형 정규화
+    def parse_number(val, default=0.0):
+        if val is None:
+            return default
+        if isinstance(val, (int, float)):
+            return float(val)
+        num_match = re.search(r"[-+]?\d*\.?\d+", str(val))
+        return float(num_match.group(0)) if num_match else default
+
+    meal_name = parsed.get("meal_name") or parsed.get("식단명") or "분석된 식단"
+    calories = parse_number(parsed.get("calories") if parsed.get("calories") is not None else parsed.get("칼로리"))
+    carbs = parse_number(parsed.get("carbs") if parsed.get("carbs") is not None else parsed.get("탄수화물"))
+    sugar = parse_number(parsed.get("sugar") if parsed.get("sugar") is not None else parsed.get("당류"))
+    ai_feedback = parsed.get("ai_feedback") or parsed.get("분석내용") or text
+
+    return {
+        "meal_name": str(meal_name),
+        "calories": calories,
+        "carbs": carbs,
+        "sugar": sugar,
+        "ai_feedback": str(ai_feedback)
+    }
+
+# 이미지 처리 및 AI 분석
 if img_file is not None:
-    
-    # 이미지를 AI가 볼 수 있도록 변환
     image = Image.open(img_file)
-    
-    # GPT용 이미지 확인하는 방법
-    # bytes_data = img_file.getvalue()
-    # base64_image = base64.b64encode(bytes_data).decode('utf-8')
-    
+    st.image(image, caption="선택된 음식 이미지", use_container_width=True)
 
-    # 확인용 화면에 사진 띄우기
-    st.image(image, caption="촬영된 음식", use_container_width=True)
-    
-    # st.success("이미지 변환 성공")
-
-    # st.write("변환된 데이터 앞 100자 : ")
-    # 문자열 다루기 [시작값:끝값]
-    # st.code(base64_image[:-100])
-
-    # Gemini에게 보낼 질문
     prompt = f"""
     너는 {user_name}님의 전담 임상 영양사야.
     사용자의 정보는 다음과 같아:
@@ -203,67 +283,53 @@ if img_file is not None:
     1. [인사 및 요약]: {user_name}님, 보여주신 음식의 정보를 알려드릴게요.
     2. [영양소 정보]: 추정 당류 함량 (g), 추정 탄수화물 함량 (g), 칼로리(kcal)
     3. [개인 맞춤 분석]: 이 음식이 사용자의 목표치({daily_goal}g)에서 몇 %나 차지하는지 계산해줘.
-       (예: 이 쿠기 한 개는 {user_name}님의 하루 목표 섭취량의 60%에 달합니다!)
-    4. [영영사의 조언]: 사용자의 나이와 목표를 고려해서 혈당을 덜 올리는 섭취 꿀팁을 알려줘.
+       (예: 이 쿠키 한 개는 {user_name}님의 하루 목표 섭취량의 60%에 달합니다!)
+    4. [영양사의 조언]: 사용자의 나이와 목표를 고려해서 혈당을 덜 올리는 섭취 꿀팁을 알려줘.
 
-    [분석 리포트] : 위 1~4번 형식으로 사용자에게 보여줄 친절한 메세지를 작성해줘.
-    [JSON 데이터] : 아래 JSON 형식으로만 데이터를 작성해줘. JSON 외에 다른 설명은 절대 추가하지 마.
+    [분석 리포트] : 위 1~4번 형식으로 사용자에게 보여줄 친절한 메시지를 작성해줘.
+    [JSON 데이터] : 아래 JSON 형식으로만 데이터를 작성해줘. 단위(g, kcal 등) 없이 순수 숫자만 기재해줘.
+    ```json
     {{
-        "식단명": "음식 이름",
-        "영양정보": "당류 0g, 탄수화물 0g",
-        "칼로리": 0,
-        "분석내용": "분석 리포트 전체 내용"
+        "meal_name": "음식 이름",
+        "calories": 0,
+        "carbs": 0,
+        "sugar": 0,
+        "ai_feedback": "분석 리포트 전체 내용"
     }}
+    ```
     """
 
-    #st.write("사용가능한 모델 확인")
-    #try:
-    #    for m in genai.list_models():
-    #        if 'generateContent' in m.supported_generation_methods:
-    #            st.write(m.name)
-    #except Exception as e:
-    #    st.error(f"목록 가져오기 실패 : {e}")
-        
-    # 분석 버튼 로직
     if st.button("영양소 분석하기"):
-        with st.spinner("AI 영양사가 분석 중입니다..."):
-            try:
-                # Gemini 모델 불러오기
-                model = genai.GenerativeModel('gemini-2.5-flash')
+        if "GOOGLE_API_KEY" not in st.secrets or not st.secrets["GOOGLE_API_KEY"]:
+            st.error("Google Gemini API 키가 설정되지 않았습니다. .streamlit/secrets.toml을 확인해주세요.")
+        else:
+            with st.spinner("AI 영양사가 분석 중입니다..."):
+                try:
+                    model = genai.GenerativeModel('gemini-2.5-flash')
+                    response = model.generate_content([prompt, image])
+                    st.session_state.ai_result = response.text
+                    st.success("분석 완료!")
+                except Exception as e:
+                    st.error(f"AI 분석 중 오류가 발생했습니다: {e}")
 
-                # AI에게 질문과 이미지 전달
-                response = model.generate_content([prompt, image])
-                
-                # 분석결과 세션에 저장
-                st.session_state.ai_result = response.text
-                st.success("분석 완료!")    
-            except Exception as e:
-                st.error(f"오류가 발생했습니다.: {e}")
-    
-    # 저장 로직 (노션에 분석 결과 저장)
+    # 분석 결과 출력 및 Supabase 저장
     if 'ai_result' in st.session_state:
         result_text = st.session_state.ai_result
-        
+
         st.write("### AI 분석 결과")
-        st.write(result_text) 
-        
-        if st.button("노션에 저장"):
+        st.write(result_text)
+
+        if st.button("Supabase에 저장하기"):
             try:
-                # '{'가 시작하는 위치부터 끝까지 자르기
-                json_str = result_text[result_text.find("{"):result_text.rfind("}")+1]
-                data = json.loads(json_str)
-                
-                # 노션에 저장
-                notion.pages.create(
-                    parent={"database_id": "3abab25d770d80a4a5cdfa055327d5a3"},
-                    properties={
-                        "식단명": {"title": [{"text": {"content": data["식단명"]}}]},
-                        "영양정보": {"rich_text": [{"text": {"content": data["영양정보"]}}]},
-                        "칼로리": {"number": int(data["칼로리"])},
-                        "분석내용": {"rich_text": [{"text": {"content": data["분석내용"]}}]},
-                        "기록날짜": {"date": {"start": datetime.now().strftime("%Y-%m-%d")}}
-                    }
+                parsed_data = extract_and_parse_json(result_text)
+                save_diet_record(
+                    meal_name=parsed_data["meal_name"],
+                    calories=parsed_data["calories"],
+                    carbs=parsed_data["carbs"],
+                    sugar=parsed_data["sugar"],
+                    ai_feedback=parsed_data["ai_feedback"]
                 )
-                st.success("노션 저장 완료!")
+                st.success(f"'{parsed_data['meal_name']}' 식단이 Supabase에 성공적으로 저장되었습니다!")
+                st.balloons()
             except Exception as e:
-                st.error(f"데이터 형식이 올바르지 않아 저장할 수 없습니다: {e}")
+                st.error(f"데이터 형식이 올바르지 않거나 저장에 실패했습니다: {e}")

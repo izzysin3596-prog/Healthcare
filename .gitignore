@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Streamlit secrets (Do not commit real API keys)
+.streamlit/secrets.toml
+!.streamlit/secrets.toml.example
+streamlit/secrets.toml
+
+# OS specific
+.DS_Store
+Thumbs.db
