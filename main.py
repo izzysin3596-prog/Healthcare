@@ -14,36 +14,57 @@ st.set_page_config(page_title="혈당 가이드", page_icon="🩺", layout="wide
 # Supabase 클라이언트 초기화 (@st.cache_resource)
 @st.cache_resource
 def init_supabase() -> Client:
-    # secrets 내 [supabase] 섹션 또는 루트 키에서 대소문자 무관하게 탐색
-    supabase_sec = st.secrets.get("supabase", {})
-    if not isinstance(supabase_sec, dict):
-        supabase_sec = {}
+    url = None
+    key = None
 
-    url = (
-        supabase_sec.get("SUPABASE_URL")
-        or supabase_sec.get("supabase_url")
-        or supabase_sec.get("url")
-        or st.secrets.get("SUPABASE_URL")
-        or st.secrets.get("supabase_url")
-    )
+    # 1. [supabase] 섹션 내에서 탐색
+    if "supabase" in st.secrets:
+        sec = st.secrets["supabase"]
+        for k in ["SUPABASE_URL", "supabase_url", "URL", "url"]:
+            if k in sec and sec[k]:
+                url = str(sec[k]).strip()
+                break
+        for k in [
+            "SUPABASE_PUBLISHABLE_KEY", "supabase_publishable_key",
+            "SUPABASE_ANON_KEY", "supabase_anon_key",
+            "SUPABASE_KEY", "supabase_key",
+            "PUBLISHABLE_KEY", "publishable_key",
+            "ANON_KEY", "anon_key",
+            "KEY", "key"
+        ]:
+            if k in sec and sec[k]:
+                key = str(sec[k]).strip()
+                break
 
-    key = (
-        supabase_sec.get("SUPABASE_PUBLISHABLE_KEY")
-        or supabase_sec.get("supabase_publishable_key")
-        or supabase_sec.get("publishable_key")
-        or supabase_sec.get("key")
-        or st.secrets.get("SUPABASE_PUBLISHABLE_KEY")
-        or st.secrets.get("supabase_publishable_key")
-    )
+    # 2. 루트 레벨에서 탐색 (섹션 구분이 없을 경우 대비)
+    if not url:
+        for k in ["SUPABASE_URL", "supabase_url", "URL", "url"]:
+            if k in st.secrets and st.secrets[k]:
+                url = str(st.secrets[k]).strip()
+                break
+
+    if not key:
+        for k in [
+            "SUPABASE_PUBLISHABLE_KEY", "supabase_publishable_key",
+            "SUPABASE_ANON_KEY", "supabase_anon_key",
+            "SUPABASE_KEY", "supabase_key",
+            "PUBLISHABLE_KEY", "publishable_key",
+            "ANON_KEY", "anon_key",
+            "KEY", "key"
+        ]:
+            if k in st.secrets and st.secrets[k]:
+                key = str(st.secrets[k]).strip()
+                break
 
     if not url or not key:
         st.error(
-            "⚠️ Supabase 설정 누락: `.streamlit/secrets.toml` (로컬) 또는 Streamlit Cloud의 **App Settings ➔ Secrets**에 아래 설정을 추가해주세요:\n\n"
+            "⚠️ Supabase 설정 누락: Streamlit Cloud의 **App Settings ➔ Secrets** 또는 로컬 `.streamlit/secrets.toml`에 아래 설정을 등록해주세요:\n\n"
             "```toml\n"
             "[supabase]\n"
             'SUPABASE_URL = "https://lyqyarhbedcnouxdqchp.supabase.co"\n'
             'SUPABASE_PUBLISHABLE_KEY = "sb_publishable_VvBiEXvDvL4RxWFggsFN-g_EH7FiKL_"\n'
-            "```"
+            "```\n"
+            "*(※ 또는 `SUPABASE_ANON_KEY = \"eyJ...\"` 형식의 anon 키도 지원됩니다)*"
         )
         st.stop()
 
